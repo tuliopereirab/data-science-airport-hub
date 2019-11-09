@@ -2,6 +2,16 @@ import pandas as pd
 import numpy as np
 from pandas import DataFrame
 
+def address_create(year,month):
+    # this function creates an address to access an specific file based on year and month
+    datasets_folder = 'datasets'
+    if(month>=10):
+        months_divider = '/'
+    else:
+        months_divider = '/0'
+    address = str(datasets_folder) + '/' + str(year) + months_divider + str(month) + '.csv'
+    return address
+
 def column_name(option,year,month):
     # the datasets chosen has a few problems with column names
     # this can be explained because some of the datasets used the ICAO default
@@ -54,21 +64,16 @@ def column_name(option,year,month):
 def create_airport_list(year):
     # this function will return the name of all airports contained into all datasets for a year
     # these names will be used for counting how many times each airport is shown 
-    # and this number will define how many upcoming or outgoing flights each airport had
+    # and this number will define how many incoming or outgoing flights each airport had
     
     # creating the two most important arrays for this step
     # they'll be used for create the address to each files be accessed
     # ----------------------------------
     # this step creates each one of the addresses necessary to access the csv files
     airports = {}   # the array where the list of airport will be saved
-    datasets_folder = 'datasets'
     for j in range(1,13):       # use range(1,13)
-        if(j>=10):
-            months_divider = '/'
-        else:
-            months_divider = '/0'
-        address = str(datasets_folder) + '/' + str(year) + months_divider + str(j) + '.csv'
-   
+        
+        address = address_create(year,j)    # gets the address for the year-month file
         # the next step will opens each one of the csv files datasets
         # after, it'll find all the different values which were not saved yet
         # so the different values will be saved into an array
@@ -116,14 +121,34 @@ def create_airport_list(year):
 
     # the last step will be create and write a csv file 
     # the array created in the last step will be used to create the new csv file
-    
 
-def create_dataset_airports():
-    # this function makes analysis in all files 
+# print(create_airport_list(2018))        # test the function above
+
+def create_dataset_airports(year):
+    # this function makes analysis in files each year
     # the files must to be divided by year and it's needed one file per month
     # this function will count how many times the airports are shown
-    # and it will create a new csv file with all the information
+    # the list of airports in each year will come from the function above
+    # and a new csv file will be created with all the information
     # the new csv file has the format below:
     #   year; month; airport; incoming_flights; outgoing_flights
-    
-    
+    year = 2001
+    airport_list = create_airport_list(year)
+    df = pd.DataFrame(columns=['year','month','airport','incoming','outgoing'])
+    for j in range(1,13):
+        address = address_create(year,j)    # gets the address for the specific month based on the year
+        file = pd.read_csv(address, sep=';', encoding='iso-8859-15',engine='python',error_bad_lines=False)
+        
+        column_airport_from = column_name(0,year,j)
+        column_airport_to = column_name(1,year,j)
+        
+        for i in airport_list:  
+            temp_incoming_flights = file[file[column_airport_to] == airport_list[i]].shape[0]
+            temp_outgoing_flights = file[file[column_airport_from] == airport_list[i]].shape[0]
+            print(str(address) + '\t' + str(airport_list[i]) + ': ' + str(temp_incoming_flights) + '\t'  + str(temp_outgoing_flights)) #shows file, airport and the number of outgoing flights
+            	
+            df = df.append(pd.Series([str(year), str(j), str(airport_list[i]), str(temp_incoming_flights), str(temp_outgoing_flights)], index=df.columns), ignore_index=True)
+            
+    address_output_file = 'datasets/' + 'flight_numbers/' + str(year) + '.csv'
+    output_file = df.to_csv (address_output_file, index = None, header=True)
+    print(df)
