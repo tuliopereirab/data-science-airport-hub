@@ -1,3 +1,10 @@
+# this whole Python script is used only when it's necessary to create new csv files with the number of flights 
+# this code makes analysis in each one of the csv files and generate new csv files containing the analysis
+# the analysis check each one of the year folders and generate the new csv file based on the year analysed
+# for each year, there is a csv file 
+# for the next steps, it will be used only the csv generated from this process 
+# none of the original datasets will be used for further analysis
+
 import pandas as pd
 import numpy as np
 from pandas import DataFrame
@@ -12,6 +19,28 @@ def address_create(year,month):
     address = str(datasets_folder) + '/' + str(year) + months_divider + str(month) + '.csv'
     return address
 
+def get_encoding_code(year,month):
+    # this function is used to get the right encoding for the specific file
+    # some of the files has different enconding, so it is necessary
+    if(year == 2014):
+        if((month == 6) or (month == 7)):
+            return 'utf-8'
+        else:
+            return 'iso-8859-15'
+    elif((year == 2017) and (month == 9)):
+        return 'utf-8'
+    else:
+        return 'iso-8859-15'
+
+def get_engine_definition(encoding):
+    # when a csv file with utf-8 encoding is being read, it is necessary change the engine
+    # the engine used for utf-8 encoding file reading is C and for all the others is python
+    if(encoding == 'utf-8'):
+        return 'c'
+    else:
+        return 'python'
+    
+    
 def column_name(option,year,month):
     # the datasets chosen has a few problems with column names
     # this can be explained because some of the datasets used the ICAO default
@@ -72,7 +101,6 @@ def create_airport_list(year):
     # this step creates each one of the addresses necessary to access the csv files
     airports = {}   # the array where the list of airport will be saved
     for j in range(1,13):       # use range(1,13)
-        
         address = address_create(year,j)    # gets the address for the year-month file
         # the next step will opens each one of the csv files datasets
         # after, it'll find all the different values which were not saved yet
@@ -83,8 +111,11 @@ def create_airport_list(year):
         column_airport_from = column_name(0,year,j)
         column_airport_to = column_name(1,year,j)
         
+        encoding_code = get_encoding_code(year,j)
+        engine_def = get_engine_definition(encoding_code)
+        
         # this substep will open a file and get the unique values for departed from airports
-        file = pd.read_csv(address, sep=';', encoding='iso-8859-15',engine='python',error_bad_lines=False)
+        file = pd.read_csv(address, sep=';', encoding=encoding_code,engine=engine_def,error_bad_lines=False)
         temp_airports = file[column_airport_from].unique()
         
         # this substep will check if the airport is already in the list
@@ -132,12 +163,15 @@ def create_dataset_airports(year):
     # and a new csv file will be created with all the information
     # the new csv file has the format below:
     #   year; month; airport; incoming_flights; outgoing_flights
-    year = 2001
     airport_list = create_airport_list(year)
     df = pd.DataFrame(columns=['year','month','airport','incoming','outgoing'])
     for j in range(1,13):
         address = address_create(year,j)    # gets the address for the specific month based on the year
-        file = pd.read_csv(address, sep=';', encoding='iso-8859-15',engine='python',error_bad_lines=False)
+        
+        encoding_code = get_encoding_code(year,j)
+        engine_def = get_engine_definition(encoding_code)
+        
+        file = pd.read_csv(address, sep=';', encoding=encoding_code,engine=engine_def,error_bad_lines=False)
         
         column_airport_from = column_name(0,year,j)
         column_airport_to = column_name(1,year,j)
@@ -151,4 +185,14 @@ def create_dataset_airports(year):
             
     address_output_file = 'datasets/' + 'flight_numbers/' + str(year) + '.csv'
     output_file = df.to_csv (address_output_file, index = None, header=True)
-    print(df)
+    
+    
+# --------------------------------------------
+    # this peace of code makes analysis in all csv file from all year folders
+    # the output of this are new csv files with number of flights from/to each airport found
+for x in range(2000,2019):
+    create_dataset_airports(x)
+# --------------------------------------------
+    
+# print(pd.read_csv('datasets/2017/12.csv', sep=';', encoding='iso-8859-15',engine='python',error_bad_lines=False)) 
+    
