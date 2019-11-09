@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from pandas import DataFrame
 
 def create_airport_list():
     # this function creates a csv file containing all the airports/aerodromes shown in the files
@@ -21,7 +22,7 @@ def create_airport_list():
     datasets_folder = 'datasets'
     count = 0
     for i in years:
-        for j in range(4,7):       # use range(0,13)
+        for j in range(1,13):       # use range(1,13)
             if(j>=10):
                 months_divider = '/'
             else:
@@ -45,7 +46,7 @@ def create_airport_list():
             column_airport_to = 'ICAO Aeródromo Destino'
                
         # this substep will open a file and get the unique values for departed from airports
-        file = pd.read_csv(address[i], sep=';', encoding='iso-8859-15',engine='python')
+        file = pd.read_csv(address[i], sep=';', encoding='iso-8859-15',engine='python',error_bad_lines=False)
         temp_airports = file[column_airport_from].unique()
         for j in temp_airports:
             exists = 0
@@ -75,6 +76,7 @@ def create_airport_list():
         #temp_airports.clear()   # clear the array
         print('Arquivo ' + address[i] + ' lido')
     print(airports)
+    
 
     # the last step will be create and write a csv file 
     # the array created in the last step will be used to create the new csv file
