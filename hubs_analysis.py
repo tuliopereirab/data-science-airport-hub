@@ -9,6 +9,8 @@ import pandas as pd
 import numpy as np
 from pandas import DataFrame
 
+import seaborn as sns
+
 def address_create(year,month):
     # this function creates an address to access an specific file based on year and month
     datasets_folder = 'datasets'
@@ -195,4 +197,3 @@ for x in range(2000,2019):
 # --------------------------------------------
     
 # print(pd.read_csv('datasets/2017/12.csv', sep=';', encoding='iso-8859-15',engine='python',error_bad_lines=False)) 
-    
